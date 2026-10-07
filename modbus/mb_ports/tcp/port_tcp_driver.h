@@ -320,12 +320,12 @@ esp_err_t mb_drv_stop_task(void *ctx);
  *
  * This function must be called after initialization of ESP-MODBUS Interface
  *
- * @param uid - modbus slave address of the slave
+ * @param svr_idx - index of the modbus server within the address table (1-based)
  * @return mb_node_info_t
  *          - Address of slave info structure on success
  *          - NULL, if the slave is not found
  */
-mb_node_info_t *mb_drv_get_node_info_from_addr(void *ctx, uint8_t uid);
+mb_node_info_t *mb_drv_get_node_info_from_addr(void *ctx, uint8_t svr_idx);
 
 mb_node_info_t *mb_drv_get_node(void *ctx, int fd);
 
