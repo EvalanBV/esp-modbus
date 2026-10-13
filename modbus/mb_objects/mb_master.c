@@ -601,7 +601,9 @@ mb_err_enum_t mbm_poll(mb_base_t *inst)
             if (event.trans_id == mbm_obj->curr_trans_id) {
                 mb_port_timer_disable(MB_OBJ(inst->port_obj));
                 // Check if the frame is for us. If not ,send an error process event.
-                const bool tcp_uid_wildcard = (mbm_obj->cur_mode == MB_TCP) &&
+                // There is a bug in `esp-modbus` TCP master where the server index must match the UID
+                // Therefore, for TCP master, we do not check the receive address.
+                const bool tcp_uid_wildcard = (mbm_obj->cur_mode == MB_TCP) ||
                                               ((mbm_obj->rcv_addr == MB_ADDRESS_BROADCAST) || (mbm_obj->rcv_addr == MB_TCP_PSEUDO_ADDRESS));
                 if ((status == MB_ENOERR) && ((mbm_obj->rcv_addr == mbm_obj->master_dst_addr) || tcp_uid_wildcard)) {
                     if ((mbm_obj->rcv_frame[MB_PDU_FUNC_OFF] & ~MB_FUNC_ERROR) == (mbm_obj->snd_frame[MB_PDU_FUNC_OFF])) {

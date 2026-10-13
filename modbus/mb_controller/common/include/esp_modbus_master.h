@@ -173,6 +173,7 @@ typedef struct {
     size_t              param_size;         /*!< Number of bytes in the parameter. */
     mb_parameter_opt_t  param_opts;         /*!< Parameter options used to check limits and etc. */
     mb_param_perms_t    access;             /*!< Access permissions based on mode */
+    uint8_t             mb_unit_id;            /*!< Modbus unit identifier (TCP only) */
 } mb_parameter_descriptor_t;
 
 /**
@@ -183,6 +184,7 @@ typedef struct {
     uint8_t command;                /*!< Modbus command to send */
     uint16_t reg_start;             /*!< Modbus start register */
     uint16_t reg_size;              /*!< Modbus number of registers */
+    uint8_t unit_id;                /*!< Modbus unit identifier (TCP only)*/
     /**
      * @brief Extra fields used only by function code 23 (0x17)
      *        @c MB_FUNC_READWRITE_MULTIPLE_REGISTERS.
