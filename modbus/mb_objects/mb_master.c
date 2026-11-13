@@ -109,14 +109,22 @@ static mb_exception_t mbm_check_invoke_handler(mb_base_t *inst, uint8_t func_cod
         return MB_EX_ILLEGAL_FUNCTION;
     }
     if (func_code & MB_FUNC_ERROR) {
+        
+        /* exception respnses are 2 bytes: 
+         - the function code with error flag
+         - and the exception code
+        if the buffer ain't big enough, it's an invalid PDU,
+        return MB_EX_ILLEGAL_DATA_VALUE */
         if (!len || (*len <= MB_PDU_DATA_OFF)) {
             ESP_LOGE(TAG,
                      "Invalid truncated exception PDU, length=%u",
                      len ? (unsigned)*len : 0U);
             return MB_EX_ILLEGAL_DATA_VALUE;
         }
-        exception = (mb_exception_t)buf[MB_PDU_DATA_OFF];
-        return exception;
+        /* Otherwise, call the appropriate handler for the function code 
+         There are no default handlers for exception responses 
+         So this will be ignored by default.
+         The user can implement custom handling for exception responses if needed */
     }
     SEMA_SECTION(mbm_obj->handler_descriptor.sema, MB_HANDLER_UNLOCK_TICKS) {
         mb_fn_handler_fp handler = NULL;
