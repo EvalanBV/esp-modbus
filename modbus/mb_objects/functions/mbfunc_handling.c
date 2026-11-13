@@ -13,8 +13,10 @@ static const char TAG[] __attribute__((unused)) = "MB_FUNC_HANDLING";
 mb_err_enum_t mb_set_handler(handler_descriptor_t *descriptor, uint8_t func_code, mb_fn_handler_fp handler)
 {
     MB_RETURN_ON_FALSE((descriptor && handler && descriptor->instance), MB_EINVAL, TAG, "invalid arguments.");
-    MB_RETURN_ON_FALSE(MB_IS_VALID_FUNC_CODE(func_code), MB_EINVAL, TAG,
-                       "invalid function code (0x%x)", (int)func_code);
+    
+    /* Commented by Rose (13/11/2026) as we want to register exception handlers as well */
+    /* MB_RETURN_ON_FALSE(MB_IS_VALID_FUNC_CODE(func_code), MB_EINVAL, TAG,
+                       "invalid function code (0x%x)", (int)func_code); */
 
     mb_command_entry_t *item_ptr = NULL;
     LIST_FOREACH(item_ptr, &descriptor->head, entries) {
@@ -45,8 +47,10 @@ mb_err_enum_t mb_set_handler(handler_descriptor_t *descriptor, uint8_t func_code
 mb_err_enum_t mb_get_handler(handler_descriptor_t *descriptor, uint8_t func_code, mb_fn_handler_fp *handler)
 {
     MB_RETURN_ON_FALSE((descriptor && handler && descriptor->instance), MB_EINVAL, TAG, "invalid arguments.");
-    MB_RETURN_ON_FALSE(MB_IS_VALID_FUNC_CODE(func_code), MB_EINVAL, TAG,
-                       "invalid function code (0x%x)", (int)func_code);
+    
+    /* Commented by Rose (13/11/2026) as we want to register exception handlers as well */
+    /* MB_RETURN_ON_FALSE(MB_IS_VALID_FUNC_CODE(func_code), MB_EINVAL, TAG,
+                       "invalid function code (0x%x)", (int)func_code); */
 
     mb_command_entry_t *item_ptr = NULL;
     LIST_FOREACH(item_ptr, &descriptor->head, entries) {
