@@ -108,29 +108,40 @@ static mb_exception_t mbm_check_invoke_handler(mb_base_t *inst, uint8_t func_cod
     if (!func_code || !buf) {
         return MB_EX_ILLEGAL_FUNCTION;
     }
+    
     if (func_code & MB_FUNC_ERROR) {
-        
-        /* exception respnses are 2 bytes: 
+        /* Handle exception responses
+        Exception respnses are 2 bytes: 
          - the function code with error flag
          - and the exception code
         if the buffer ain't big enough, it's an invalid PDU,
-        return MB_EX_ILLEGAL_DATA_VALUE */
+        so return MB_EX_ILLEGAL_DATA_VALUE */
         if (!len || (*len <= MB_PDU_DATA_OFF)) {
             ESP_LOGE(TAG,
                      "Invalid truncated exception PDU, length=%u",
                      len ? (unsigned)*len : 0U);
             return MB_EX_ILLEGAL_DATA_VALUE;
         }
-        /* Otherwise, call the appropriate handler for the function code 
-         There are no default handlers for exception responses 
-         So this will be ignored by default.
-         The user can implement custom handling for exception responses if needed */
     }
     SEMA_SECTION(mbm_obj->handler_descriptor.sema, MB_HANDLER_UNLOCK_TICKS) {
         mb_fn_handler_fp handler = NULL;
         mb_err_enum_t status = mb_get_handler(&mbm_obj->handler_descriptor, func_code, &handler);
+        
         if ((status == MB_ENOERR) && handler) {
+            /* For all non-exception responses, there is a default handler,
+            so we should always end up running this line */
             exception = handler(inst, buf, len);
+        
+        } else if (func_code & MB_FUNC_ERROR) {
+            /* There are no default handlers for exception responses, but users may
+            implement custom handlers. If they don't, we end up here */
+            ESP_LOGD(TAG, "No handler found for exception response, func_code=0x%02x", func_code);
+            exception = (mb_exception_t)buf[MB_PDU_DATA_OFF];
+        
+        } else {
+            /* This should almost never run, only if the user has deleted a default
+            handler without adding a new one. */
+            ESP_LOGW(TAG, "No handler found for function code=0x%02x", func_code);
         }
     }
     return exception;
