@@ -318,6 +318,7 @@ static esp_err_t mbc_tcp_master_set_request(void *ctx, uint16_t cid, mb_param_mo
             .reg_start = reg_ptr->mb_reg_start,
             .reg_size = reg_ptr->mb_size,
             .command = mbc_master_get_command(reg_ptr, mode),
+            .unit_id = reg_ptr->mb_unit_id,
         };
         MB_RETURN_ON_FALSE((request->command > 0), ESP_ERR_INVALID_ARG, TAG, "mb incorrect command or parameter type.");
         if (reg_data) {
@@ -342,10 +343,25 @@ static esp_err_t mbc_tcp_master_get_parameter(void *ctx, uint16_t cid, uint8_t *
     error = mbc_tcp_master_set_request(ctx, cid, MB_PARAM_READ, &request, &reg_info);
     if ((error == ESP_OK) && (cid == reg_info.cid) && (request.slave_addr != MB_SLAVE_ADDR_PLACEHOLDER)) {
         mb_uid_info_t *addr_info = mbm_port_tcp_get_slave_info(mbm_controller_iface->mb_base->port_obj,
-                                   request.slave_addr, MB_SOCK_STATE_CONNECTED);
+                                   request.slave_addr, MB_SOCK_STATE_UNDEF);
         if (!addr_info) {
-            ESP_LOGW(TAG, "%p Try to send request for cid #%u with uid = %d, node is disconnected.",
+            /* should never get here */
+            ESP_LOGE(TAG, "%p Try to send request for cid #%u with server_idx = %d, node is not found.",
                      mbm_controller_iface, (unsigned)reg_info.cid, (int)request.slave_addr);
+            return ESP_ERR_INVALID_STATE;
+        } else {
+            ESP_LOGI(TAG, "%p Found config for cid #%u, server_idx=%d, ip: %s.",
+                     mbm_controller_iface, (unsigned)reg_info.cid, (int)request.slave_addr, addr_info->ip_addr_str);
+
+            /* override the UID in the address info with the one from the parameter descriptor */
+            addr_info->uid = request.unit_id;
+            ESP_LOGI(TAG, "%p requests for CID #%u with UID = %d on server_idx = %d (%s)", 
+                mbm_controller_iface,
+                (unsigned)reg_info.cid,
+                (int)request.unit_id,
+                (int)request.slave_addr,
+                addr_info->ip_addr_str
+            );
         }
         MB_MASTER_ASSERT(xPortGetFreeHeapSize() > (reg_info.mb_size << 1));
         // alloc buffer to store parameter data
@@ -456,10 +472,25 @@ static esp_err_t mbc_tcp_master_set_parameter(void *ctx, uint16_t cid, uint8_t *
     error = mbc_tcp_master_set_request(ctx, cid, MB_PARAM_WRITE, &request, &reg_info);
     if ((error == ESP_OK) && (cid == reg_info.cid) && (request.slave_addr != MB_SLAVE_ADDR_PLACEHOLDER)) {
         mb_uid_info_t *addr_info = mbm_port_tcp_get_slave_info(mbm_controller_iface->mb_base->port_obj,
-                                   request.slave_addr, MB_SOCK_STATE_CONNECTED);
+                                   request.slave_addr, MB_SOCK_STATE_UNDEF);
         if (!addr_info) {
-            ESP_LOGW(TAG, "Try to send request for cid #%u with uid = %d, node is disconnected.",
-                     (unsigned)reg_info.cid, (int)request.slave_addr);
+            /* should never get here */
+            ESP_LOGE(TAG, "%p Try to send request for cid #%u with server_idx = %d, node is not found.",
+                     mbm_controller_iface, (unsigned)reg_info.cid, (int)request.slave_addr);
+            return ESP_ERR_INVALID_STATE;
+        } else {
+            ESP_LOGI(TAG, "%p Found config for cid #%u, server_idx=%d, ip: %s.",
+                     mbm_controller_iface, (unsigned)reg_info.cid, (int)request.slave_addr, addr_info->ip_addr_str);
+
+            /* override the UID in the address info with the one from the parameter descriptor */
+            addr_info->uid = request.unit_id;
+            ESP_LOGI(TAG, "%p requests for CID #%u with UID = %d on server_idx = %d (%s)", 
+                mbm_controller_iface,
+                (unsigned)reg_info.cid,
+                (int)request.unit_id,
+                (int)request.slave_addr,
+                addr_info->ip_addr_str
+            );
         }
         MB_MASTER_ASSERT(xPortGetFreeHeapSize() > (reg_info.mb_size << 1));
         data_ptr = calloc(1, (reg_info.mb_size << 1)); // alloc parameter buffer
