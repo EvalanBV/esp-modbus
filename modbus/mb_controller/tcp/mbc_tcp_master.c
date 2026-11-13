@@ -104,15 +104,21 @@ static esp_err_t mbc_tcp_master_start(void *ctx)
 static esp_err_t mbc_tcp_master_stop(void *ctx)
 {
     mbm_controller_iface_t *mbm_iface = MB_MASTER_GET_IFACE(ctx);
-    mb_master_options_t *mbm_opts = MB_MASTER_GET_OPTS(ctx);
+    //mb_master_options_t *mbm_opts = MB_MASTER_GET_OPTS(ctx);
     mb_err_enum_t status = MB_EIO;
     mbm_iface->mb_base->descr.parent = ctx;
 
+
+    
+    // 26.06.09 (Rose) - do not return error if the flag was not set.
+    // If start_disconnected = false, then all the workers and objects are created, but the
+    // stack is not considered "started" until the connection is established, so the flag will not be set in this case.   
+    // However, we still need to delete all the workers and objects in stop function, so we will continue even if the flag was not set.
     // Set the mbcontroller start flag
-    EventBits_t flag = xEventGroupClearBits(mbm_opts->event_group_handle,
-                                            (EventBits_t)MB_EVENT_STACK_STARTED);
-    MB_RETURN_ON_FALSE((flag & MB_EVENT_STACK_STARTED),
-                       ESP_ERR_INVALID_STATE, TAG, "mb stack stop event set error.");
+    // EventBits_t flag = xEventGroupClearBits(mbm_opts->event_group_handle,
+    //                                        (EventBits_t)MB_EVENT_STACK_STARTED);
+    // MB_RETURN_ON_FALSE((flag & MB_EVENT_STACK_STARTED),
+    //                   ESP_ERR_INVALID_STATE, TAG, "mb stack stop event set error.");
 
     status = mbm_iface->mb_base->disable(mbm_iface->mb_base);
     MB_RETURN_ON_FALSE((status == MB_ENOERR), ESP_ERR_INVALID_STATE, TAG,
